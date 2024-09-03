@@ -21,7 +21,7 @@ function Gameboard() {
 
   const markBoard = (row, column, player) => {
     let currentValue = board[row][column].getValue();
-    if (currentValue !== 0) {
+    if (currentValue !== "") {
       console.log("invalid move, please try again")
       return false;
     }
@@ -33,7 +33,7 @@ function Gameboard() {
 };
 
 function Cell() {
-  let value = 0;
+  let value = "";
 
   const mark = (player) => {
     value = player;
@@ -56,11 +56,11 @@ function GameController(
     const players = [
       {
         name: playerOneName,
-        mark: 1
+        mark: "O"
       },
       {
         name: playerTwoName,
-        mark: 2
+        mark: "X"
       }
     ];
   
@@ -77,7 +77,7 @@ function GameController(
     };
   
     const playRound = (row, column) => {
-      // Drop a mark for the current player
+      // Make a mark for the current player
       console.log(
         `Putting ${getActivePlayer().name}'s mark at ${row},${column}...`
       );
@@ -129,7 +129,14 @@ function GameController(
           // This makes it easier to pass into our `playRound` function 
           cellButton.dataset.row = index1
           cellButton.dataset.column = index2
-          cellButton.textContent = cell.getValue();
+          let cellValue = cell.getValue();
+          cellButton.textContent = cellValue;
+          if (cellValue === "O") {
+            cellButton.classList.add("nought");
+          }
+          if (cellValue ==="X") {
+            cellButton.classList.add("cross");
+          }
           boardDiv.appendChild(cellButton);
         })
       })
