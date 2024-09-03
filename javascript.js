@@ -22,10 +22,11 @@ function Gameboard() {
   const markBoard = (row, column, player) => {
     let currentValue = board[row][column].getValue();
     if (currentValue !== 0) {
-        console.log("current value of position " + currentValue)
-      return;
+      console.log("invalid move, please try again")
+      return false;
     }
     board[row][column].mark(player);
+    return true
   };
 
   return { getBoard, markBoard, printBoard };
@@ -80,25 +81,76 @@ function GameController(
       console.log(
         `Putting ${getActivePlayer().name}'s mark at ${row},${column}...`
       );
-      board.markBoard(row, column, getActivePlayer().mark);
+      const validMove = board.markBoard(row, column, getActivePlayer().mark);
   
       /*  This is where we would check for a winner and handle that logic,
           such as a win message. */
   
       // Switch player turn
-      switchPlayerTurn();
+      if (validMove) {
+        switchPlayerTurn();
+      }
       printNewRound();
     };
   
     // Initial play game message
     printNewRound();
-  
-    // For the console version, we will only use playRound, but we will need
-    // getActivePlayer for the UI version, so I'm revealing it now
+
     return {
       playRound,
-      getActivePlayer
+      getActivePlayer,
+      getBoard: board.getBoard
     };
   }
   
-  const game = GameController();
+  function ScreenController() {
+    const game = GameController();
+    const playerTurnDiv = document.querySelector('.turn');
+    const boardDiv = document.querySelector('.board');
+  
+    const updateScreen = () => {
+      // clear the board
+      boardDiv.textContent = "";
+  
+      // get the newest version of the board and player turn
+      const board = game.getBoard();
+      const activePlayer = game.getActivePlayer();
+  
+      // Display player's turn
+      playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
+  
+      // Render board squares
+      board.forEach((row, index1) => {
+        row.forEach((cell, index2) => {
+          // Anything clickable should be a button!!
+          const cellButton = document.createElement("button");
+          cellButton.classList.add("cell");
+          // Create a data attribute to identify the column
+          // This makes it easier to pass into our `playRound` function 
+          cellButton.dataset.row = index1
+          cellButton.dataset.column = index2
+          cellButton.textContent = cell.getValue();
+          boardDiv.appendChild(cellButton);
+        })
+      })
+    }
+  
+    // Add event listener for the board
+    function clickHandlerBoard(e) {
+      const selectedRow = e.target.dataset.row;
+      const selectedColumn = e.target.dataset.column;
+      // Make sure I've clicked a column and not the gaps in between
+      if (!selectedColumn) return;
+      if (!selectedRow) return;
+      game.playRound(selectedRow, selectedColumn);
+      updateScreen();
+    }
+    boardDiv.addEventListener("click", clickHandlerBoard);
+  
+    // Initial render
+    updateScreen();
+  
+    // We don't need to return anything from this module because everything is encapsulated inside this screen controller.
+  }
+  
+  ScreenController();  
