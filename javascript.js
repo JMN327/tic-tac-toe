@@ -1,4 +1,10 @@
 function Gameboard() {
+  // creates the grid and populates it with individual cells objects to be marked during the game
+  // methods returned:
+  // get board - allows the board state to be sent to the game controller
+  // print board - logs the board in the console for debugging
+  // mark board - passes player data from game controller to cell objects
+
   const rows = 3;
   const columns = 3;
   const board = [];
@@ -12,6 +18,7 @@ function Gameboard() {
   }
 
   const getBoard = () => board;
+
   const printBoard = () => {
     const boardWithCellValues = board.map((row) =>
       row.map((cell) => cell.getValue())
@@ -33,6 +40,12 @@ function Gameboard() {
 };
 
 function Cell() {
+  // Object for individual cells of the board.  
+  // Holds an X or O value based on which player marked it
+  // Methods returned:
+  // mark - add the active player's mark to the cell.  accessed by the game controller
+  // get value - returns the current state of a cell
+
   let value = "";
 
   const mark = (player) => {
@@ -48,6 +61,12 @@ function Cell() {
 }
 
 function GameController(
+    // handler for updating the game state.  Sets the 2 players and controls their interactions with the game
+    // Methods returned:
+    // Play round - handles game logic:  updates gameboard cells and switches active player
+    // Get Active Player - returns the active player.  called by the screen controller 
+    // Get Board - passes board from gameboard to screen controller for screen updates
+
     playerOneName = "Player One",
     playerTwoName = "Player Two"
   ) {
