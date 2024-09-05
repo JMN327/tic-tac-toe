@@ -5,16 +5,20 @@
     align-items: center;
 }
 
+.turn {
+  font-family: "Jua", sans-serif;
+}
+
 .board {
     display: grid;
     height: 500px;
     width: 500px;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    border: 3px solid rgb(139, 214, 173);
-    gap: 8px;
-    padding: 8px;
-    background-color: rgb(107, 160, 144);
+    border: 8px solid grey;
+    gap: 12px;
+    padding: 12px;
+    background-color: darkgrey;
     border-radius: 32px;
   }
   
@@ -25,14 +29,15 @@
     text-align: center;
     font-size: 6rem;
     font-family: "Jua", sans-serif;
-    border: 3px solid rgb(139, 214, 173);
+    border: 8px solid grey;
     border-radius: 32px;
-    background: rgb(215, 221, 205);
+    background: white;
     cursor: pointer;
   }
+
   .nought {
-    color: red;
+    color: hsl(10, 90%, 55%);
   }
   .cross {
-    color: blue;
+    color: hsl(216,90%, 55%);
   }

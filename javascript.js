@@ -146,7 +146,6 @@ function GameController(
     function clickHandlerBoard(e) {
       const selectedRow = e.target.dataset.row;
       const selectedColumn = e.target.dataset.column;
-      // Make sure I've clicked a column and not the gaps in between
       if (!selectedColumn) return;
       if (!selectedRow) return;
       game.playRound(selectedRow, selectedColumn);
@@ -156,8 +155,6 @@ function GameController(
   
     // Initial render
     updateScreen();
-  
-    // We don't need to return anything from this module because everything is encapsulated inside this screen controller.
   }
   
   ScreenController();  
