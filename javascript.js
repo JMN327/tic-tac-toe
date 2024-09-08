@@ -84,6 +84,7 @@ function GameController(
   playerTwoName = "Player Two"
 ) {
   let info = "";
+  let winLine = {};
   const board = Gameboard();
   const turnCounter = TurnCounter();
 
@@ -111,8 +112,6 @@ function GameController(
   };
 
   const checkForWin = () => {
-    let gameWon = false;
-
     const checkLines = [
       [0, 1, 2],
       [3, 4, 5],
@@ -131,11 +130,11 @@ function GameController(
       const match = a === b && b === c && c != "";
       console.log(match);
       if (match) {
-        gameWon = true;
+        return { gameWon: true, start: checkLine[0], end: checkLine[2] };
       }
     }
 
-    return gameWon;
+    return { gameWon: false };
   };
 
   const setInfo = (gameWon) => {
@@ -148,6 +147,12 @@ function GameController(
 
   const getInfo = () => info;
 
+  const setWinLine = (start, end) => {
+    winLine = { start, end };
+  };
+
+  const getWinLine = () => winLine;
+
   const playRound = (row, column) => {
     // Make a mark for the current player
     console.log(
@@ -159,18 +164,19 @@ function GameController(
     if (!validMove) {
       return;
     }
-
-    if (checkForWin()) {
-      setInfo(true);
-      console.log(`The winner is ${activePlayer.name}`);
+    winCheck = checkForWin();
+    setInfo(winCheck.gameWon);
+    if (winCheck.gameWon) {
+      setWinLine(winCheck.start, winCheck.end);
       return;
     }
 
     // Initialize next round
-    setInfo(false);
+
     turnCounter.increment();
     console.log(`Turn Number ${turnCounter.getTurnNumber()}`);
     switchPlayerTurn();
+    setInfo(false);
     printNewRound();
   };
 
@@ -182,6 +188,7 @@ function GameController(
     getActivePlayer,
     getBoard: board.getBoard,
     getInfo,
+    getWinLine,
   };
 }
 
@@ -197,9 +204,10 @@ function ScreenController() {
     // get the newest version of the board and player turn
     const board = game.getBoard();
     const info = game.getInfo();
+    const winLineData = game.getWinLine();
 
     // Display player's turn or win/draw message
-    infoBarDiv.textContent = info; //`${activePlayer.name}'s turn...`;
+    infoBarDiv.textContent = info;
 
     // Render board squares
     board.forEach((row, index1) => {
@@ -222,6 +230,34 @@ function ScreenController() {
         boardDiv.appendChild(cellButton);
       });
     });
+
+    //Render Win Line
+    if (Object.keys(winLineData).length != 0) {
+      const winLine = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg"
+      );
+      winLine.classList.add("winLine");
+      const startCell = boardDiv.childNodes[winLineData.start];
+      const endCell = boardDiv.childNodes[winLineData.end];
+      const b0 = boardDiv.getBoundingClientRect();
+      const b1 = startCell.getBoundingClientRect();
+      const b2 = endCell.getBoundingClientRect();
+      const newLine = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "polyline"
+      );
+      const x1 = b1.left + b1.width / 2 - b0.left;
+      const y1 = b1.top + b1.height / 2 - b0.top;
+      const x2 = b2.left + b2.width / 2 - b0.left;
+      const y2 = b2.top + b2.height / 2 - b0.top;
+      newLine.setAttribute(
+        "points",
+        `${x1},${y1} ${x2},${y2}`
+      );
+      winLine.appendChild(newLine);
+      boardDiv.appendChild(winLine);
+    }
   };
 
   // Add event listener for the board
