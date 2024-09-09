@@ -3,7 +3,7 @@
   margin: 0px;
 }
 
-.container {
+.gameContainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -67,7 +67,7 @@
 .playAgainDiv {
   grid-column: 1 / 4;
   color: rgb(46, 46, 46);
-  height: 80px;
+  height:110px;
   margin: 20px;
   width: 100%;
   display: flex;

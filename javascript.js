@@ -1,10 +1,4 @@
 function Gameboard() {
-  // creates the grid and populates it with individual cells objects to be marked during the game
-  // methods returned:
-  // get board - allows the board state to be sent to the game controller
-  // print board - logs the board in the console for debugging
-  // mark board - passes player data from game controller to cell objects
-
   const rows = 3;
   const columns = 3;
   const board = [];
@@ -22,18 +16,9 @@ function Gameboard() {
 
   const getBoard = () => board;
 
-  const printBoard = () => {
-    const boardWithCellValues = board.map((row) =>
-      row.map((cell) => cell.getValue())
-    );
-    console.log(boardWithCellValues);
-    return boardWithCellValues;
-  };
-
   const markBoard = (row, column, player) => {
     let currentValue = board[row][column].getValue();
     if (currentValue !== "") {
-      console.log("invalid move, please try again");
       return false;
     }
     board[row][column].mark(player);
@@ -42,16 +27,10 @@ function Gameboard() {
 
   resetBoard();
 
-  return { getBoard, markBoard, printBoard, resetBoard };
+  return { getBoard, markBoard, resetBoard };
 }
 
 function Cell() {
-  // Object for individual cells of the board.
-  // Holds an X or O value based on which player marked it
-  // Methods returned:
-  // mark - add the active player's mark to the cell.  accessed by the game controller
-  // get value - returns the current state of a cell
-
   let value = "";
 
   const mark = (player) => {
@@ -74,24 +53,18 @@ function Cell() {
 function TurnCounter() {
   let turnNumber = 1;
 
-  const getTurnNumber = () => turnNumber;
+  const turn = () => turnNumber;
   const increment = () => turnNumber++;
   const reset = () => (turnNumber = 1);
 
   return {
-    getTurnNumber,
+    turn,
     increment,
     reset,
   };
 }
 
 function GameController(
-  // handler for updating the game state.  Sets the 2 players and controls their interactions with the game
-  // Methods returned:
-  // Play round - handles game logic:  updates gameboard cells and switches active player
-  // Get Active Player - returns the active player.  called by the screen controller
-  // Get Board - passes board from gameboard to screen controller for screen updates
-
   playerOneName = "Player One",
   playerTwoName = "Player Two"
 ) {
@@ -118,11 +91,6 @@ function GameController(
   };
   const getActivePlayer = () => activePlayer;
 
-  const printNewRound = () => {
-    board.printBoard();
-    console.log(`${getActivePlayer().name}'s turn.`);
-  };
-
   const checkForWin = () => {
     const checkLines = [
       [0, 1, 2],
@@ -134,18 +102,20 @@ function GameController(
       [0, 4, 8],
       [2, 4, 6],
     ];
-    const flatBoard = board.printBoard().flat(1);
+
+    const flatBoard = board
+      .getBoard()
+      .map((row) => row.map((cell) => cell.getValue()))
+      .flat(1);
     for (const checkLine of checkLines) {
       const a = flatBoard[checkLine[0]];
       const b = flatBoard[checkLine[1]];
       const c = flatBoard[checkLine[2]];
       const match = a === b && b === c && c != "";
-      console.log(match);
       if (match) {
         return { gameWon: true, start: checkLine[0], end: checkLine[2] };
       }
     }
-
     return { gameWon: false };
   };
 
@@ -154,11 +124,11 @@ function GameController(
       info = `The winner is ${`${activePlayer.name}`}`;
       return;
     }
-    if (turnCounter.getTurnNumber() === 10) {
+    if (turnCounter.turn() === 10) {
       info = "Draw game!";
       return;
     }
-    if (turnCounter.getTurnNumber() === 1) {
+    if (turnCounter.turn() === 1) {
       info = `Game begins! ${activePlayer.name}'s turn...`;
       return;
     }
@@ -175,18 +145,14 @@ function GameController(
 
   const reset = () => {
     winLine = {};
+    turnCounter.reset();
     board.resetBoard();
     setInfo();
   };
 
   const playRound = (row, column) => {
-    // Make a mark for the current player
-    console.log(
-      `Putting ${getActivePlayer().name}'s mark at ${row},${column}...`
-    );
-    // mark the board.  If the move was valid (on an empty space) then true is returned)
-    const validMove = board.markBoard(row, column, getActivePlayer().mark);
 
+    const validMove = board.markBoard(row, column, getActivePlayer().mark);
     if (!validMove) {
       return;
     }
@@ -194,21 +160,16 @@ function GameController(
     setInfo(winCheck.gameWon);
     if (winCheck.gameWon) {
       setWinLine(winCheck.start, winCheck.end);
-      turnCounter.reset();
       return;
     }
-
     // Initialize next round
-
     turnCounter.increment();
-    console.log(`Turn Number ${turnCounter.getTurnNumber()}`);
+    console.log(`Turn Number ${turnCounter.turn()}`);
     switchPlayerTurn();
     setInfo(false);
-    printNewRound();
   };
 
   // Initial play game message
-  printNewRound();
   setInfo(false);
 
   return {
@@ -225,7 +186,7 @@ function ScreenController() {
   const game = GameController();
   const infoBarDiv = document.querySelector(".info-bar");
   const boardDiv = document.querySelector(".board");
-  const container = document.querySelector(".container");
+  const gameContainer = document.querySelector(".gameContainer");
 
   const updateScreen = () => {
     // clear the board
@@ -234,15 +195,11 @@ function ScreenController() {
     // get the newest version of the board and player turn
     const board = game.getBoard();
     const info = game.getInfo();
-    console.log(`info is ${info}`)
+    console.log(`info is ${info}`);
     const winLineData = game.getWinLine();
 
     // Display player's turn or win/draw message
     infoBarDiv.textContent = info;
-
-    if (info === "Draw game!") {
-      addPlayAgainButton();
-    }
 
     // Render board squares
     board.forEach((row, index1) => {
@@ -293,6 +250,10 @@ function ScreenController() {
       addPlayAgainButton();
     }
 
+    if (info === "Draw game!") {
+      addPlayAgainButton();
+    }
+
     function addPlayAgainButton() {
       const playAgainDiv = document.createElement("div");
       playAgainDiv.classList = "playAgainDiv";
@@ -301,16 +262,14 @@ function ScreenController() {
       playAgainBtn.innerText = "Play Again";
       playAgainBtn.addEventListener("click", clickPlayAgain);
       playAgainDiv.appendChild(playAgainBtn);
-      container.appendChild(playAgainDiv);
+      gameContainer.appendChild(playAgainDiv);
     }
-
   };
-
-  /* boardDiv.textContent = ""; */
 
   // Add event listene for the board
   function clickPlayAgain() {
-    container.lastChild.remove();
+    console.log(`last child is: ${gameContainer.lastChild.classList[0]}`);
+    gameContainer.lastChild.remove();
     game.reset();
     updateScreen();
   }
