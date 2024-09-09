@@ -10,12 +10,15 @@ function Gameboard() {
   const board = [];
 
   //populate board array with Cell objects
-  for (let i = 0; i < rows; i++) {
-    board[i] = [];
-    for (let j = 0; j < columns; j++) {
-      board[i].push(Cell());
+  const resetBoard = () => {
+    for (let i = 0; i < rows; i++) {
+      board[i] = [];
+      for (let j = 0; j < columns; j++) {
+        board[i].push(Cell());
+      }
     }
-  }
+    console.log("board initialized");
+  };
 
   const getBoard = () => board;
 
@@ -37,7 +40,9 @@ function Gameboard() {
     return true;
   };
 
-  return { getBoard, markBoard, printBoard };
+  resetBoard();
+
+  return { getBoard, markBoard, printBoard, resetBoard };
 }
 
 function Cell() {
@@ -55,9 +60,14 @@ function Cell() {
 
   const getValue = () => value;
 
+  const reset = () => {
+    value = "";
+  };
+
   return {
     mark,
     getValue,
+    reset,
   };
 }
 
@@ -66,10 +76,12 @@ function TurnCounter() {
 
   const getTurnNumber = () => turnNumber;
   const increment = () => turnNumber++;
+  const reset = () => (turnNumber = 1);
 
   return {
     getTurnNumber,
     increment,
+    reset,
   };
 }
 
@@ -142,6 +154,14 @@ function GameController(
       info = `The winner is ${`${activePlayer.name}`}`;
       return;
     }
+    if (turnCounter.getTurnNumber() === 10) {
+      info = "Draw game!";
+      return;
+    }
+    if (turnCounter.getTurnNumber() === 1) {
+      info = `Game begins! ${activePlayer.name}'s turn...`;
+      return;
+    }
     info = `${activePlayer.name}'s turn...`;
   };
 
@@ -152,6 +172,12 @@ function GameController(
   };
 
   const getWinLine = () => winLine;
+
+  const reset = () => {
+    winLine = {};
+    board.resetBoard();
+    setInfo();
+  };
 
   const playRound = (row, column) => {
     // Make a mark for the current player
@@ -168,6 +194,7 @@ function GameController(
     setInfo(winCheck.gameWon);
     if (winCheck.gameWon) {
       setWinLine(winCheck.start, winCheck.end);
+      turnCounter.reset();
       return;
     }
 
@@ -182,6 +209,7 @@ function GameController(
 
   // Initial play game message
   printNewRound();
+  setInfo(false);
 
   return {
     playRound,
@@ -189,6 +217,7 @@ function GameController(
     getBoard: board.getBoard,
     getInfo,
     getWinLine,
+    reset,
   };
 }
 
@@ -196,6 +225,7 @@ function ScreenController() {
   const game = GameController();
   const infoBarDiv = document.querySelector(".info-bar");
   const boardDiv = document.querySelector(".board");
+  const container = document.querySelector(".container");
 
   const updateScreen = () => {
     // clear the board
@@ -204,10 +234,15 @@ function ScreenController() {
     // get the newest version of the board and player turn
     const board = game.getBoard();
     const info = game.getInfo();
+    console.log(`info is ${info}`)
     const winLineData = game.getWinLine();
 
     // Display player's turn or win/draw message
     infoBarDiv.textContent = info;
+
+    if (info === "Draw game!") {
+      addPlayAgainButton();
+    }
 
     // Render board squares
     board.forEach((row, index1) => {
@@ -251,14 +286,34 @@ function ScreenController() {
       const y1 = b1.top + b1.height / 2 - b0.top;
       const x2 = b2.left + b2.width / 2 - b0.left;
       const y2 = b2.top + b2.height / 2 - b0.top;
-      newLine.setAttribute(
-        "points",
-        `${x1},${y1} ${x2},${y2}`
-      );
+      newLine.setAttribute("points", `${x1},${y1} ${x2},${y2}`);
       winLine.appendChild(newLine);
       boardDiv.appendChild(winLine);
+
+      addPlayAgainButton();
     }
+
+    function addPlayAgainButton() {
+      const playAgainDiv = document.createElement("div");
+      playAgainDiv.classList = "playAgainDiv";
+      const playAgainBtn = document.createElement("button");
+      playAgainBtn.classList.add("resetBtn");
+      playAgainBtn.innerText = "Play Again";
+      playAgainBtn.addEventListener("click", clickPlayAgain);
+      playAgainDiv.appendChild(playAgainBtn);
+      container.appendChild(playAgainDiv);
+    }
+
   };
+
+  /* boardDiv.textContent = ""; */
+
+  // Add event listene for the board
+  function clickPlayAgain() {
+    container.lastChild.remove();
+    game.reset();
+    updateScreen();
+  }
 
   // Add event listener for the board
   function clickHandlerBoard(e) {
