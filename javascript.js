@@ -16,80 +16,112 @@ function Gameboard() {
 
   const getBoard = () => board;
 
-  const markBoard = (row, column, player) => {
+  const markBoard = (row, column, playerMark) => {
     let currentValue = board[row][column].getValue();
+    console.log(currentValue);
     if (currentValue !== "") {
       return false;
     }
-    board[row][column].mark(player);
+    board[row][column].mark(playerMark);
     return true;
   };
+
+  function Cell() {
+    let value = "";
+
+    const mark = (playerMark) => {
+      value = playerMark;
+    };
+
+    const getValue = () => value;
+
+    const reset = () => {
+      value = "";
+    };
+
+    return {
+      mark,
+      getValue,
+      reset,
+    };
+  }
 
   resetBoard();
 
   return { getBoard, markBoard, resetBoard };
 }
 
-function Cell() {
-  let value = "";
-
-  const mark = (player) => {
-    value = player;
-  };
-
-  const getValue = () => value;
-
-  const reset = () => {
-    value = "";
-  };
-
-  return {
-    mark,
-    getValue,
-    reset,
-  };
-}
-
-function TurnCounter() {
-  let turnNumber = 1;
-
-  const turn = () => turnNumber;
-  const increment = () => turnNumber++;
-  const reset = () => (turnNumber = 1);
-
-  return {
-    turn,
-    increment,
-    reset,
-  };
-}
-
-function GameController(
-  playerOneName = "Player One",
-  playerTwoName = "Player Two"
-) {
-  let info = "";
+function GameController() {
+  let players = Players();
   let winLine = {};
   const board = Gameboard();
   const turnCounter = TurnCounter();
+  let gameActiveState = false;
 
-  const players = [
-    {
-      name: playerOneName,
-      mark: "O",
-    },
-    {
-      name: playerTwoName,
-      mark: "X",
-    },
-  ];
+  function Players() {
+    let players = [
+      {
+        name: "Player One",
+        mark: "O",
+        score: 0,
+        index: 0,
+      },
+      {
+        name: "Player Two",
+        mark: "X",
+        score: 0,
+        index: 1,
+      },
+    ];
+    let activePlayer = players[0];
 
-  let activePlayer = players[0];
+    const getActivePlayer = () => activePlayer;
 
-  const switchPlayerTurn = () => {
-    activePlayer = activePlayer === players[0] ? players[1] : players[0];
-  };
-  const getActivePlayer = () => activePlayer;
+    const switchPlayerTurn = () => {
+      activePlayer = activePlayer === players[0] ? players[1] : players[0];
+    };
+
+    const setPlayerNames = (playerOneName, playerTwoName) => {
+      players[0].name = playerOneName == "" ? "Player One" : playerOneName;
+      players[1].name = playerTwoName == "" ? "Player Two" : playerTwoName;
+    };
+    const setPlayerMarks = (playerOneMark, playerTwoMark) => {
+      players[0].mark = playerOneMark;
+      players[1].mark = playerTwoMark;
+    };
+    const incrementScores = (playerIndex) => {
+      players[playerIndex].score++;
+    };
+    const resetScores = () => {
+      players[0].score = 0;
+      players[1].score = 0;
+    };
+    const getPlayers = () => players;
+
+    return {
+      getActivePlayer,
+      switchPlayerTurn,
+      setPlayerNames,
+      setPlayerMarks,
+      incrementScores,
+      resetScores,
+      getPlayers,
+    };
+  }
+
+  function TurnCounter() {
+    let turnNumber = 1;
+
+    const turn = () => turnNumber;
+    const increment = () => turnNumber++;
+    const reset = () => (turnNumber = 1);
+
+    return {
+      turn,
+      increment,
+      reset,
+    };
+  }
 
   const checkForWin = () => {
     const checkLines = [
@@ -119,27 +151,15 @@ function GameController(
     return { gameWon: false };
   };
 
-  const setInfo = (gameWon) => {
-    if (gameWon) {
-      info = `The winner is ${`${activePlayer.name}`}`;
-      return;
-    }
-    if (turnCounter.turn() === 10) {
-      info = "Draw game!";
-      return;
-    }
-    if (turnCounter.turn() === 1) {
-      info = `Game begins! ${activePlayer.name}'s turn...`;
-      return;
-    }
-    info = `${activePlayer.name}'s turn...`;
-  };
-
-  const getInfo = () => info;
-
   const setWinLine = (start, end) => {
     winLine = { start, end };
   };
+
+  const toggleGameActiveState = () => {
+    gameActiveState ? (gameActiveState = false) : (gameActiveState = true);
+  };
+
+  const getGameActiveState = () => gameActiveState;
 
   const getWinLine = () => winLine;
 
@@ -147,38 +167,56 @@ function GameController(
     winLine = {};
     turnCounter.reset();
     board.resetBoard();
-    setInfo();
+    console.log(players.getActivePlayer().name);
+    Info.setInfo(`Game begins! ${players.getActivePlayer().name}'s turn...`);
   };
 
   const playRound = (row, column) => {
-
-    const validMove = board.markBoard(row, column, getActivePlayer().mark);
+    console.log("playing round");
+    const validMove = board.markBoard(
+      row,
+      column,
+      players.getActivePlayer().mark
+    );
     if (!validMove) {
       return;
     }
     winCheck = checkForWin();
-    setInfo(winCheck.gameWon);
     if (winCheck.gameWon) {
+      Info.setInfo(`A win! 1 point to ${players.getActivePlayer().name}!`);
       setWinLine(winCheck.start, winCheck.end);
+      players.incrementScores(players.getActivePlayer().index);
+      console.log(players.getPlayers()[0].score, players.getPlayers()[1].score);
+      toggleGameActiveState();
+      return;
+    }
+    if (turnCounter.turn() === 9) {
+      Info.setInfo("Draw game!");
+      console.log("Draw!");
+      toggleGameActiveState();
       return;
     }
     // Initialize next round
     turnCounter.increment();
     console.log(`Turn Number ${turnCounter.turn()}`);
-    switchPlayerTurn();
-    setInfo(false);
+    players.switchPlayerTurn();
+    Info.setInfo(`${players.getActivePlayer().name}'s turn...`);
   };
 
   // Initial play game message
-  setInfo(false);
 
   return {
+    setPlayerNames: players.setPlayerNames,
+    setPlayerMarks: players.setPlayerMarks,
+    incrementScores: players.incrementScores,
+    resetScores: players.resetScores,
+    getPlayers: players.getPlayers,
     playRound,
-    getActivePlayer,
     getBoard: board.getBoard,
-    getInfo,
     getWinLine,
     reset,
+    toggleGameActiveState,
+    getGameActiveState,
   };
 }
 
@@ -186,7 +224,9 @@ function ScreenController() {
   const game = GameController();
   const infoBarDiv = document.querySelector(".info-bar");
   const boardDiv = document.querySelector(".board");
-  const gameContainer = document.querySelector(".gameContainer");
+  const toolbar = document.querySelector(".toolbar");
+  const scores = document.querySelectorAll(".score");
+  const toolbarBtnArr = Array.from(document.querySelector(".toolbar").children);
 
   const updateScreen = () => {
     // clear the board
@@ -194,11 +234,13 @@ function ScreenController() {
 
     // get the newest version of the board and player turn
     const board = game.getBoard();
-    const info = game.getInfo();
-    console.log(`info is ${info}`);
     const winLineData = game.getWinLine();
 
     // Display player's turn or win/draw message
+    if (Info.getInfo() == "") {
+      Info.setInfo("Welcome! check the buttons below");
+    }
+    const info = Info.getInfo();
     infoBarDiv.textContent = info;
 
     // Render board squares
@@ -247,35 +289,84 @@ function ScreenController() {
       winLine.appendChild(newLine);
       boardDiv.appendChild(winLine);
 
-      addPlayAgainButton();
+      toggleToolbar(true, true, true);
+
+      scores[0].innerText = game.getPlayers()[0].score;
+      scores[1].innerText = game.getPlayers()[1].score;
     }
 
     if (info === "Draw game!") {
-      addPlayAgainButton();
-    }
-
-    function addPlayAgainButton() {
-      const playAgainDiv = document.createElement("div");
-      playAgainDiv.classList = "playAgainDiv";
-      const playAgainBtn = document.createElement("button");
-      playAgainBtn.classList.add("resetBtn");
-      playAgainBtn.innerText = "Play Again";
-      playAgainBtn.addEventListener("click", clickPlayAgain);
-      playAgainDiv.appendChild(playAgainBtn);
-      gameContainer.appendChild(playAgainDiv);
+      toggleToolbar(true, true, true);
     }
   };
 
-  // Add event listene for the board
-  function clickPlayAgain() {
-    console.log(`last child is: ${gameContainer.lastChild.classList[0]}`);
-    gameContainer.lastChild.remove();
-    game.reset();
-    updateScreen();
+  function toggleToolbar(b0, b1, b2) {
+    toolbarBtnArr[0].disabled = !b0;
+    toolbarBtnArr[1].disabled = !b1;
+    toolbarBtnArr[2].disabled = !b2;
+    console.log("Toolbar Toggled");
+  }
+
+  function togglePlayerInfo(btn) {
+    nameInputs = document.querySelectorAll(".name-input");
+    nameInputs.forEach((nameInput) => {
+      nameInput.disabled === true
+        ? (nameInput.disabled = false)
+        : (nameInput.disabled = true);
+    });
+    markInputs = document.querySelectorAll(".mark-group");
+    array1 = Array.from(markInputs[0].childNodes).concat(
+      Array.from(markInputs[1].childNodes)
+    );
+    array1.forEach((markInputs) => {
+      markInputs.disabled === true
+        ? (markInputs.disabled = false)
+        : (markInputs.disabled = true);
+    });
+    if (nameInputs[0].disabled === false) {
+      nameInputs[0].focus();
+      toggleToolbar(true, false, false);
+      btn.innerText = "Done";
+      Info.setInfo("Enter you names and choose Marks");
+    } else {
+      toggleToolbar(true, true, true);
+      btn.innerText = "Set Players";
+      game.setPlayerNames(nameInputs[0].value, nameInputs[1].value);
+      Info.setInfo("Names Updated.  Ready for a New Game?");
+    }
+  }
+  // Add event listener for the toolbar
+  function clickHandlerToolbar(e) {
+    switch (parseFloat(e.target.dataset.groupPosition)) {
+      case 1:
+        togglePlayerInfo(e.target);
+        infoBarDiv.textContent = Info.getInfo();
+        break;
+
+      case 2:
+        toggleToolbar(false, false, false);
+        game.toggleGameActiveState();
+        game.reset();
+        updateScreen();
+        break;
+
+      case 3:
+        scores[0].innerText = 0;
+        scores[1].innerText = 0;
+        game.resetScores();
+
+        break;
+
+      default:
+        break;
+    }
   }
 
   // Add event listener for the board
   function clickHandlerBoard(e) {
+    if (game.getGameActiveState() === false) {
+      return;
+    }
     const selectedRow = e.target.dataset.row;
     const selectedColumn = e.target.dataset.column;
     if (!selectedColumn) return;
@@ -283,10 +374,36 @@ function ScreenController() {
     game.playRound(selectedRow, selectedColumn);
     updateScreen();
   }
+  /*   function mouseoverHandlerBoard(e) {
+    const cellOver = e.target.classList.value;
+    if ((cellOver === "cell")) {
+      console.log(cellOver, e.target);
+      e.target.textContent = "-Z";
+    }
+    updateScreen();
+  } */
+
   boardDiv.addEventListener("click", clickHandlerBoard);
+  toolbar.addEventListener("click", clickHandlerToolbar);
+  /* boardDiv.addEventListener("mouseover", mouseoverHandlerBoard); */
 
   // Initial render
   updateScreen();
 }
+
+const Info = (function () {
+  let info = "";
+
+  const setInfo = (str) => {
+    info = str;
+  };
+
+  const getInfo = () => info;
+
+  return {
+    setInfo,
+    getInfo,
+  };
+})();
 
 ScreenController();
