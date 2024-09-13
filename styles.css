@@ -220,6 +220,7 @@ body {
 }
 
 .name-input:enabled {
+  border-color: hsl(54, 100%, 50%);
   background-color: hsl(0, 0%, 100%);
   color: hsl(120, 100%, 36%);
 }
@@ -228,6 +229,11 @@ body {
   background-color: hsl(51, 14%, 86%);
   color: hsl(120, 100%, 36%);
   opacity: 75%;
+}
+.mark-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .mark-group > * {
@@ -242,14 +248,20 @@ body {
   border-color: inherit;
   background-color: hsl(0, 0%, 100%);
 }
-.mark-group > :first-child {
+.mark-O {
   color: hsl(10, 90%, 55%);
 }
-.mark-group > :last-child {
+.mark-X {
   color: hsl(216, 90%, 55%);
 }
 
+.off {
+  color: rgb(156, 156, 156);
+  font-size: 2.75rem;
+}
+
 .mark-group > *:enabled {
+  border-color: hsl(54, 100%, 50%);
   background-color: hsl(0, 0%, 100%);
 }
 

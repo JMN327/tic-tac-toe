@@ -73,7 +73,14 @@ function GameController() {
         index: 1,
       },
     ];
-    let activePlayer = players[0];
+
+    let startPlayer = Math.round(Math.random());
+    let activePlayer = players[startPlayer];
+
+    const switchStartPlayer = () => {
+      startPlayer = startPlayer === players[0] ? players[1] : players[0];
+      activePlayer = startPlayer;
+    };
 
     const getActivePlayer = () => activePlayer;
 
@@ -99,6 +106,7 @@ function GameController() {
     const getPlayers = () => players;
 
     return {
+      switchStartPlayer,
       getActivePlayer,
       switchPlayerTurn,
       setPlayerNames,
@@ -163,10 +171,12 @@ function GameController() {
 
   const getWinLine = () => winLine;
 
-  const reset = () => {
+  const resetGame = () => {
     winLine = {};
     turnCounter.reset();
     board.resetBoard();
+    players.switchStartPlayer();
+
     console.log(players.getActivePlayer().name);
     Info.setInfo(`Game begins! ${players.getActivePlayer().name}'s turn...`);
   };
@@ -214,7 +224,7 @@ function GameController() {
     playRound,
     getBoard: board.getBoard,
     getWinLine,
-    reset,
+    resetGame,
     toggleGameActiveState,
     getGameActiveState,
   };
@@ -227,6 +237,7 @@ function ScreenController() {
   const toolbar = document.querySelector(".toolbar");
   const scores = document.querySelectorAll(".score");
   const toolbarBtnArr = Array.from(document.querySelector(".toolbar").children);
+  const markGroups = document.querySelectorAll(".mark-group");
 
   const updateScreen = () => {
     // clear the board
@@ -314,14 +325,13 @@ function ScreenController() {
         ? (nameInput.disabled = false)
         : (nameInput.disabled = true);
     });
-    markInputs = document.querySelectorAll(".mark-group");
-    array1 = Array.from(markInputs[0].childNodes).concat(
-      Array.from(markInputs[1].childNodes)
+    array1 = Array.from(markGroups[0].childNodes).concat(
+      Array.from(markGroups[1].childNodes)
     );
-    array1.forEach((markInputs) => {
-      markInputs.disabled === true
-        ? (markInputs.disabled = false)
-        : (markInputs.disabled = true);
+    array1.forEach((markGroups) => {
+      markGroups.disabled === true
+        ? (markGroups.disabled = false)
+        : (markGroups.disabled = true);
     });
     if (nameInputs[0].disabled === false) {
       nameInputs[0].focus();
@@ -346,7 +356,7 @@ function ScreenController() {
       case 2:
         toggleToolbar(false, false, false);
         game.toggleGameActiveState();
-        game.reset();
+        game.resetGame();
         updateScreen();
         break;
 
@@ -354,6 +364,8 @@ function ScreenController() {
         scores[0].innerText = 0;
         scores[1].innerText = 0;
         game.resetScores();
+        Info.setInfo("Scores reset.  Ready for a New Game?");
+        infoBarDiv.textContent = Info.getInfo();
 
         break;
 
@@ -374,6 +386,45 @@ function ScreenController() {
     game.playRound(selectedRow, selectedColumn);
     updateScreen();
   }
+
+  function clickHandlerMarkGroup(e) {
+    log(e.target.dataset.markIndex);
+    const markIndex = e.target.dataset.markIndex;
+    switch (markIndex) {
+      case "0":
+        game.setPlayerMarks("O", "X");
+        updateMarksClass(0, 3, 1, 2);
+        break;
+      case "1":
+        game.setPlayerMarks("X", "O");
+        updateMarksClass(1, 2, 0, 3);
+        break;
+      case "2":
+        game.setPlayerMarks("X", "O");
+        updateMarksClass(1, 2, 0, 3);
+        break;
+      case "3":
+        game.setPlayerMarks("O", "X");
+        updateMarksClass(0, 3, 1, 2);
+        break;
+      default:
+        log("huh");
+        break;
+    }
+    function updateMarksClass(on1, on2, off1, off2) {
+      marksArr = Array.from(markGroups[0].children).concat(
+        Array.from(markGroups[1].children)
+      );
+      if (marksArr[on1].classList.contains("off")) {
+        marksArr[on1].classList.remove("off");
+      }
+      if (marksArr[on2].classList.contains("off")) {
+        marksArr[on2].classList.remove("off");
+      }
+      marksArr[off1].classList.add("off");
+      marksArr[off2].classList.add("off");
+    }
+  }
   /*   function mouseoverHandlerBoard(e) {
     const cellOver = e.target.classList.value;
     if ((cellOver === "cell")) {
@@ -385,6 +436,8 @@ function ScreenController() {
 
   boardDiv.addEventListener("click", clickHandlerBoard);
   toolbar.addEventListener("click", clickHandlerToolbar);
+  markGroups[0].addEventListener("click", clickHandlerMarkGroup);
+  markGroups[1].addEventListener("click", clickHandlerMarkGroup);
   /* boardDiv.addEventListener("mouseover", mouseoverHandlerBoard); */
 
   // Initial render
@@ -405,5 +458,7 @@ const Info = (function () {
     getInfo,
   };
 })();
+
+log = console.log;
 
 ScreenController();
